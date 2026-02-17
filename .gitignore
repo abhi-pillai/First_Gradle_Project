@@ -1,0 +1,37 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# Ignore Kotlin plugin data
+.kotlin
+
+# Gradle build output
+build/
+.gradle/
+
+# Gradle Wrapper logs
+gradle-app.setting
+
+# OS generated files
+.DS_Store
+Thumbs.db
+# # Ignore IDE-specific files
+# # IntelliJ IDEA
+# .idea/
+# *.iml
+
+# # Eclipse
+# .project
+# .classpath
+# .settings/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Compiled class files
+*.class

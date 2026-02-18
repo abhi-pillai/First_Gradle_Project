@@ -1,22 +1,39 @@
-# Ignore Gradle project-specific cache directory
-.gradle
-
-# Ignore Gradle build output directory
-build
-
 # Ignore Kotlin plugin data
 .kotlin
 
-# Gradle build output
-build/
+# =========================
+# Gradle
+# =========================
 .gradle/
+build/
 
-# Gradle Wrapper logs
+# Ignore Gradle wrapper logs
 gradle-app.setting
 
-# OS generated files
+# =========================
+# Java
+# =========================
+*.class
+*.log
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# OS Files
+# =========================
 .DS_Store
 Thumbs.db
+
+# =========================
+# Runtime Data (IMPORTANT)
+# =========================
+data/*
+!data/.gitkeep
+
+
 # # Ignore IDE-specific files
 # # IntelliJ IDEA
 # .idea/
@@ -27,11 +44,3 @@ Thumbs.db
 # .classpath
 # .settings/
 
-# VS Code
-.vscode/
-
-# Logs
-*.log
-
-# Compiled class files
-*.class

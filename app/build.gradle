@@ -19,6 +19,8 @@ repositories {
 dependencies {
     // This dependency is used by the application.
     implementation libs.guava
+    implementation 'com.opencsv:opencsv:5.9'
+
 }
 
 testing {
@@ -40,5 +42,5 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'org.example.App'
+    mainClass = 'com.myexpense.expensetracker.Main'
 }

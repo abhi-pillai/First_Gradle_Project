@@ -30,7 +30,7 @@ Thumbs.db
 # =========================
 # Runtime Data (IMPORTANT)
 # =========================
-app.data/*.csv
+app.data/*
 !data/.gitkeep
 
 

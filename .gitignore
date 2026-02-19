@@ -13,6 +13,7 @@ gradle-app.setting
 # =========================
 # Java
 # =========================
+bin/
 *.class
 *.log
 
@@ -31,6 +32,7 @@ Thumbs.db
 # Runtime Data (IMPORTANT)
 # =========================
 app.data/*.csv
+app.data/*.pdf
 !data/.gitkeep
 
 

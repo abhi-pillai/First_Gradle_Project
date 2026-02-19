@@ -1,39 +1,42 @@
 package com.myexpense.expensetracker;
 
-import com.myexpense.expensetracker.model.Expense;
-import com.myexpense.expensetracker.model.Income;
-import com.myexpense.expensetracker.repository.ExpenseRepository;
-import com.myexpense.expensetracker.repository.IncomeRepository;
-import com.myexpense.expensetracker.service.ExpenseService;
-import com.myexpense.expensetracker.service.IncomeService;
-import com.opencsv.exceptions.CsvValidationException;
+import com.myexpense.expensetracker.repository.*;
+import com.myexpense.expensetracker.service.*;
+import com.myexpense.expensetracker.ui.LoginFrame;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.util.List;
+import javax.swing.*;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
 
-        ExpenseRepository repo = new ExpenseRepository();
-        ExpenseService service = new ExpenseService(repo);
+    public static void main(String[] args) {
 
-        System.out.println("Total: " + service.getTotalExpenses());
+        SwingUtilities.invokeLater(() -> {
 
-        service.exportToPdf("data/expense-report.pdf");
+            
+            UserRepository userRepository = new UserRepository();
+            ExpenseRepository expenseRepository = new ExpenseRepository();
+            IncomeRepository incomeRepository = new IncomeRepository();
+            CategoryRepository categoryRepository = new CategoryRepository();
 
-        System.out.println("PDF generated.");
+            // ---------------- Services ----------------
+            AuthService authService = new AuthService(userRepository);
+            ExpenseService expenseService = new ExpenseService(expenseRepository);
+            IncomeService incomeService = new IncomeService(incomeRepository);
+            ReportService reportService = new ReportService(expenseService, incomeService);
+            CategoryService categoryService = new CategoryService(categoryRepository);
+            BudgetService budgetService = new BudgetService(expenseService, categoryService);
 
-        IncomeRepository incomeRepo = new IncomeRepository();
-        IncomeService incomeService = new IncomeService(incomeRepo);
+            // ---------------- Launch LoginFrame ----------------
+            LoginFrame loginFrame = new LoginFrame(
+                    authService,
+                    expenseService,
+                    incomeService,
+                    reportService,
+                    budgetService,
+                    categoryService
+            );
 
-        Income inc = new Income(1000, LocalDate.now(), "Salary", "February salary");
-        incomeService.addIncome(inc);
-
-        System.out.println("Total Income: " + incomeService.getTotalIncome());
-
-        incomeService.exportToPdf("data/income-report.pdf");
-        System.out.println("Income PDF generated!");
+            loginFrame.setVisible(true);
+        });
     }
-
 }

@@ -31,9 +31,8 @@ Thumbs.db
 # =========================
 # Runtime Data (IMPORTANT)
 # =========================
-app/data/*.csv
-app/data/*.pdf
-!data/.gitkeep
+app/data/*
+!app/data/.gitkeep
 
 
 # # Ignore IDE-specific files

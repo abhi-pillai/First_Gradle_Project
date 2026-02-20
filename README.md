@@ -152,7 +152,7 @@ Output will be in `app/build/installer/`.
 ## 📁 Project Structure
 
 ```
-trackit/
+First_Gradle_Project/
 ├── app/
 │   └── src/main/java/com/myexpense/expensetracker/
 │       ├── Main.java                         # Entry point

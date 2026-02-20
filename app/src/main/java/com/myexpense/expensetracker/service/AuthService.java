@@ -84,6 +84,85 @@ public class AuthService {
         } catch (IOException ignored) {}
     }
 
+    // =========================
+    // CHANGE PASSWORD
+    // =========================
+    public void changePassword(String currentPassword, String newPassword) throws IOException {
+        // Verify current password first
+        String hash = PasswordUtil.hashPassword(currentPassword, loggedInUser.getSalt());
+        if (!loggedInUser.getPasswordHash().equals(hash)) {
+            throw new RuntimeException("Current password is incorrect.");
+        }
+
+        // Hash new password with a fresh salt
+        String newSalt = PasswordUtil.generateSalt();
+        String newHash = PasswordUtil.hashPassword(newPassword, newSalt);
+
+        loggedInUser.setSalt(newSalt);
+        loggedInUser.setPasswordHash(newHash);
+
+        // Persist updated user list
+        java.util.List<User> all = userRepository.loadAll();
+        all.replaceAll(u -> u.getId().equals(loggedInUser.getId()) ? loggedInUser : u);
+        userRepository.overwriteAll(all);
+    }
+
+    // =========================
+    // DELETE ACCOUNT
+    // =========================
+    public void deleteAccount(String confirmPassword) throws IOException {
+        // Verify password before deleting
+        String hash = PasswordUtil.hashPassword(confirmPassword, loggedInUser.getSalt());
+        if (!loggedInUser.getPasswordHash().equals(hash)) {
+            throw new RuntimeException("Password is incorrect. Account not deleted.");
+        }
+
+        String userId = loggedInUser.getId();
+
+        // Remove user record
+        java.util.List<User> users = userRepository.loadAll();
+        users.removeIf(u -> u.getId().equals(userId));
+        userRepository.overwriteAll(users);
+
+        // Wipe all user data from shared CSV files via repositories
+        // (We load all records and keep only those belonging to other users)
+        try {
+            deleteUserData(userId);
+        } catch (Exception ignored) {}
+
+        loggedInUser = null;
+    }
+
+    private void deleteUserData(String userId) throws IOException {
+        // Expense data
+        com.myexpense.expensetracker.repository.ExpenseRepository expRepo =
+                new com.myexpense.expensetracker.repository.ExpenseRepository();
+        expRepo.overwriteForUser(userId, new java.util.ArrayList<>());
+
+        // Income data
+        com.myexpense.expensetracker.repository.IncomeRepository incRepo =
+                new com.myexpense.expensetracker.repository.IncomeRepository();
+        incRepo.overwriteForUser(userId, new java.util.ArrayList<>());
+
+        // Category data
+        com.myexpense.expensetracker.repository.CategoryRepository catRepo =
+                new com.myexpense.expensetracker.repository.CategoryRepository();
+        catRepo.overwriteForUser(userId, new java.util.ArrayList<>());
+
+        // Budget properties (key-based, just remove the user's key)
+        java.io.File budgetFile = new java.io.File("data/budget.properties");
+        if (budgetFile.exists()) {
+            java.util.Properties props = new java.util.Properties();
+            try (java.io.InputStream in = new java.io.FileInputStream(budgetFile)) {
+                props.load(in);
+            }
+            props.remove("monthly." + userId);
+            try (java.io.OutputStream out = new java.io.FileOutputStream(budgetFile)) {
+                props.store(out, "TrackIt budget settings");
+            }
+        }
+    }
+
     public void logout() {
         loggedInUser = null;
     }

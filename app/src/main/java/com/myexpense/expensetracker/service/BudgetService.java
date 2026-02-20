@@ -9,7 +9,15 @@ import java.util.Properties;
 
 public class BudgetService {
 
-    private static final String BUDGET_FILE = "data/budget.properties";
+    private static final String BUDGET_FILE = getDataPath("budget.properties");
+
+    private static String getDataPath(String filename) {
+        String appData = System.getenv("APPDATA");
+        String base = (appData != null)
+                ? appData + java.io.File.separator + "TrackIt" + java.io.File.separator + "data"
+                : "data";
+        return base + java.io.File.separator + filename;
+    }
 
     private final ExpenseService expenseService;
     private final CategoryService categoryService;

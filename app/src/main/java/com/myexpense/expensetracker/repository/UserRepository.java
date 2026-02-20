@@ -12,7 +12,15 @@ import java.util.Optional;
 
 public class UserRepository {
 
-    private static final String FILE_PATH = "data/users.csv";
+    private static final String FILE_PATH = getDataPath("users.csv");
+
+    private static String getDataPath(String filename) {
+        String appData = System.getenv("APPDATA");
+        String base = (appData != null)
+                ? appData + java.io.File.separator + "TrackIt" + java.io.File.separator + "data"
+                : "data";
+        return base + java.io.File.separator + filename;
+    }
     private static final String[] HEADER = {"id", "username", "passwordHash", "salt"};
 
     public UserRepository() {

@@ -13,7 +13,15 @@ import java.util.List;
 
 public class ExpenseRepository {
 
-    private static final String FILE_PATH = "data/expenses.csv";
+    private static final String FILE_PATH = getDataPath("expenses.csv");
+
+    private static String getDataPath(String filename) {
+        String appData = System.getenv("APPDATA");
+        String base = (appData != null)
+                ? appData + java.io.File.separator + "TrackIt" + java.io.File.separator + "data"
+                : "data";
+        return base + java.io.File.separator + filename;
+    }
     private static final String[] HEADER = {"id", "userId", "amount", "date", "category", "note", "paymentMethod"};
 
     public ExpenseRepository() {

@@ -190,7 +190,7 @@ First_Gradle_Project/
 │         
 └── src/main/resources/
     └── fonts/
-        └── NotoEmoji-Regular.ttf             # Bundled emoji font (platform-independent)
+        └── NotoSans_ExtraCondensed-Regular.ttf            # Bundled font for ₹ symbol(platform-independent)
 ```
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>

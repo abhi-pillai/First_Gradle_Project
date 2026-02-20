@@ -25,6 +25,14 @@ dependencies {
 
 }
 
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+}
+
 testing {
     suites {
         // Configure the built-in test suite

@@ -13,39 +13,73 @@ import java.util.Optional;
 public class UserRepository {
 
     private static final String FILE_PATH = "data/users.csv";
+    private static final String[] HEADER = {"id", "username", "passwordHash", "salt"};
 
     public UserRepository() {
-        createFileIfNotExists();
+        initFile();
     }
 
-    private void createFileIfNotExists() {
+    // -------------------------------------------------------
+    // Bug 3 fix: ensure file exists AND has a valid header
+    // -------------------------------------------------------
+    private void initFile() {
         try {
             File file = new File(FILE_PATH);
             file.getParentFile().mkdirs();
 
             if (!file.exists()) {
                 file.createNewFile();
-                try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
-                    writer.writeNext(new String[]{"id", "username", "passwordHash"});
-                }
+                writeHeader(file);
+                return;
             }
+
+            // File exists — check if first line is the correct header
+            if (!hasValidHeader(file)) {
+                prependHeader(file);
+            }
+
         } catch (IOException e) {
-            throw new RuntimeException("Error creating users file", e);
+            throw new RuntimeException("Error initialising users file", e);
         }
     }
 
-    // Save new user
+    private void writeHeader(File file) throws IOException {
+        try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
+            writer.writeNext(HEADER);
+        }
+    }
+
+    private boolean hasValidHeader(File file) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String firstLine = br.readLine();
+            return firstLine != null && firstLine.contains("id") && firstLine.contains("username");
+        }
+    }
+
+    private void prependHeader(File file) throws IOException {
+        List<String> lines = new java.util.ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) lines.add(line);
+        }
+        try (PrintWriter pw = new PrintWriter(new FileWriter(file))) {
+            // Write header manually (CSV-style)
+            pw.println("\"id\",\"username\",\"passwordHash\",\"salt\"");
+            for (String line : lines) pw.println(line);
+        }
+    }
+
     public void save(User user) throws IOException {
         try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH, true))) {
             writer.writeNext(new String[]{
                     user.getId(),
                     user.getUsername(),
-                    user.getPasswordHash()
+                    user.getPasswordHash(),
+                    user.getSalt()
             });
         }
     }
 
-    // Load all users
     public List<User> loadAll() {
         List<User> users = new ArrayList<>();
         File file = new File(FILE_PATH);
@@ -58,31 +92,27 @@ public class UserRepository {
                 if (isFirstLine) { isFirstLine = false; continue; }
                 if (line.length < 3) continue;
 
-                User user = new User(line[0], line[1], line[2]);
-                users.add(user);
+                // Support legacy rows that have no salt column
+                String salt = line.length >= 4 ? line[3] : "";
+                users.add(new User(line[0], line[1], line[2], salt));
             }
         } catch (IOException | CsvValidationException e) {
             throw new RuntimeException("Error reading users file", e);
         }
-
         return users;
     }
 
-    // Overwrite all users (for updates or deletion)
     public void overwriteAll(List<User> users) throws IOException {
         try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH))) {
-            writer.writeNext(new String[]{"id", "username", "passwordHash"});
+            writer.writeNext(HEADER);
             for (User u : users) {
                 writer.writeNext(new String[]{
-                        u.getId(),
-                        u.getUsername(),
-                        u.getPasswordHash()
+                        u.getId(), u.getUsername(), u.getPasswordHash(), u.getSalt()
                 });
             }
         }
     }
 
-    // Find user by username
     public Optional<User> findByUsername(String username) {
         return loadAll().stream()
                 .filter(u -> u.getUsername().equalsIgnoreCase(username))

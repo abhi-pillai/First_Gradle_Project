@@ -1,22 +1,17 @@
 package com.myexpense.expensetracker.service;
 
 import com.lowagie.text.*;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.pdf.PdfPageEvent;
-import com.myexpense.expensetracker.model.Expense;
+import com.lowagie.text.pdf.*;
 import com.myexpense.expensetracker.model.Income;
 import com.myexpense.expensetracker.repository.IncomeRepository;
+
+import java.awt.Color;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import java.awt.Color;
-import com.lowagie.text.pdf.BaseFont;
 
 public class IncomeService {
 
@@ -29,94 +24,105 @@ public class IncomeService {
     // ===============================
     // CRUD
     // ===============================
+
     public void addIncome(Income income) throws Exception {
         repository.save(income);
     }
 
-    public List<Income> getAllIncome() {
-        return repository.loadAll();
+    public List<Income> getAllIncome(String userId) {
+        return repository.loadByUser(userId);
     }
 
-    public void deleteIncome(String id) throws Exception {
-        List<Income> incomes = repository.loadAll();
-        List<Income> updated = incomes.stream()
+    public void deleteIncome(String userId, String id) throws Exception {
+        List<Income> updated = repository.loadByUser(userId).stream()
                 .filter(i -> !i.getId().equals(id))
                 .collect(Collectors.toList());
-        repository.overwriteAll(updated);
+        repository.overwriteForUser(userId, updated);
     }
 
-    public void updateIncome(Income updatedIncome) throws Exception {
-        List<Income> incomes = repository.loadAll();
-        List<Income> updated = incomes.stream()
+    public void updateIncome(String userId, Income updatedIncome) throws Exception {
+        List<Income> updated = repository.loadByUser(userId).stream()
                 .map(i -> i.getId().equals(updatedIncome.getId()) ? updatedIncome : i)
                 .collect(Collectors.toList());
-        repository.overwriteAll(updated);
+        repository.overwriteForUser(userId, updated);
     }
 
     // ===============================
-    // TOTAL CALCULATIONS
+    // TOTALS
     // ===============================
-    public double getTotalIncome() {
-        return repository.loadAll().stream().mapToDouble(Income::getAmount).sum();
+
+    public double getTotalIncome(String userId) {
+        return repository.loadByUser(userId).stream().mapToDouble(Income::getAmount).sum();
     }
 
-    public double getTotalBySource(String source) {
-        return repository.loadAll().stream()
+    public double getTotalBySource(String userId, String source) {
+        return repository.loadByUser(userId).stream()
                 .filter(i -> i.getSource().equalsIgnoreCase(source))
-                .mapToDouble(Income::getAmount)
-                .sum();
+                .mapToDouble(Income::getAmount).sum();
     }
 
-    public double getTotalByDateRange(LocalDate start, LocalDate end) {
-        return repository.loadAll().stream()
+    public double getTotalByDateRange(String userId, LocalDate start, LocalDate end) {
+        return repository.loadByUser(userId).stream()
                 .filter(i -> !i.getDate().isBefore(start) && !i.getDate().isAfter(end))
-                .mapToDouble(Income::getAmount)
-                .sum();
+                .mapToDouble(Income::getAmount).sum();
     }
 
-    public double getMonthlyTotal(YearMonth month) {
-        return repository.loadAll().stream()
+    public double getMonthlyTotal(String userId, YearMonth month) {
+        return repository.loadByUser(userId).stream()
                 .filter(i -> YearMonth.from(i.getDate()).equals(month))
-                .mapToDouble(Income::getAmount)
-                .sum();
+                .mapToDouble(Income::getAmount).sum();
     }
 
-    public double getDailyTotal(LocalDate date) {
-        return repository.loadAll().stream()
+    public double getDailyTotal(String userId, LocalDate date) {
+        return repository.loadByUser(userId).stream()
                 .filter(i -> i.getDate().equals(date))
-                .mapToDouble(Income::getAmount)
-                .sum();
+                .mapToDouble(Income::getAmount).sum();
     }
 
     // ===============================
     // FILTERING & SEARCH
     // ===============================
-    public List<Income> filterByDateRange(LocalDate start, LocalDate end) {
-        return repository.loadAll().stream()
+
+    public List<Income> filterByDateRange(String userId, LocalDate start, LocalDate end) {
+        return repository.loadByUser(userId).stream()
                 .filter(i -> !i.getDate().isBefore(start) && !i.getDate().isAfter(end))
                 .collect(Collectors.toList());
     }
 
-    public List<Income> filterBySource(String source) {
-        return repository.loadAll().stream()
+    public List<Income> filterBySource(String userId, String source) {
+        return repository.loadByUser(userId).stream()
                 .filter(i -> i.getSource().equalsIgnoreCase(source))
                 .collect(Collectors.toList());
     }
 
-    public List<Income> searchByKeyword(String keyword) {
-        return repository.loadAll().stream()
-                .filter(i -> i.getNote() != null &&
-                        i.getNote().toLowerCase().contains(keyword.toLowerCase()))
+    public List<Income> searchByKeyword(String userId, String keyword) {
+        String kw = keyword.toLowerCase();
+        return repository.loadByUser(userId).stream()
+                .filter(i -> (i.getNote() != null && i.getNote().toLowerCase().contains(kw))
+                        || i.getSource().toLowerCase().contains(kw))
+                .collect(Collectors.toList());
+    }
+
+    public List<Income> filterAdvanced(String userId, LocalDate start, LocalDate end,
+                                       String source, String keyword) {
+        return repository.loadByUser(userId).stream()
+                .filter(i -> start == null || !i.getDate().isBefore(start))
+                .filter(i -> end   == null || !i.getDate().isAfter(end))
+                .filter(i -> source == null || source.isEmpty()
+                        || i.getSource().equalsIgnoreCase(source))
+                .filter(i -> keyword == null || keyword.isEmpty()
+                        || (i.getNote() != null && i.getNote().toLowerCase().contains(keyword.toLowerCase()))
+                        || i.getSource().toLowerCase().contains(keyword.toLowerCase()))
                 .collect(Collectors.toList());
     }
 
     // ===============================
     // EXPORT PDF
     // ===============================
-    public void exportToPdf(String filePath) throws Exception {
 
-        List<Income> incomes = repository.loadAll();
-        
+    public void exportToPdf(String userId, String filePath) throws Exception {
+        List<Income> incomes = repository.loadByUser(userId);
+
         BaseFont baseFont = BaseFont.createFont(
         "src/main/resources/fonts/NotoSans_ExtraCondensed-Regular.ttf",
         BaseFont.IDENTITY_H,
@@ -190,12 +196,12 @@ public class IncomeService {
 
         
 
-        // ── Expense table ────────────────────────────────────────────────
+        // ── Income table ────────────────────────────────────────────────
         PdfPTable table = new PdfPTable(3);
         table.setWidthPercentage(100);
         table.setWidths(new float[]{2f, 2.5f, 1.5f});
-        table.setSpacingBefore(10);
-        table.setSpacingAfter(10);
+        table.setSpacingBefore(0);
+        table.setSpacingAfter(0);
 
         // Header row
         String[] headers = {"Date", "Source", "Amount"};
@@ -235,25 +241,29 @@ public class IncomeService {
         document.add(table);
 
         // ── Total row ────────────────────────────────────────────────────
-        PdfPTable totalTable = new PdfPTable(2);
+        PdfPTable totalTable = new PdfPTable(3);
         totalTable.setWidthPercentage(100);
-        totalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalTable.setWidths(new float[]{3.5f, 1f});
+        totalTable.setWidths(new float[]{2f, 2.5f, 1.5f});
+        totalTable.setSpacingBefore(0);
+        totalTable.setSpacingAfter(0);
 
         PdfPCell labelCell = new PdfPCell(new Phrase("Total Income ", totalFont));
-        labelCell.setBackgroundColor(Color.LIGHT_GRAY);
+        labelCell.setColspan(2);
+        labelCell.setBackgroundColor(new Color(220, 220, 220));
         labelCell.setPadding(8);
         labelCell.setBorder(Rectangle.BOX);
         labelCell.setBorderWidth(1.0f);
         labelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        labelCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
         PdfPCell valueCell = new PdfPCell(
-            new Phrase(String.format("₹%.2f", getTotalIncome()), totalFont));
+            new Phrase(String.format("₹%.2f", getTotalIncome(userId)), totalFont));
         valueCell.setBackgroundColor(accentColor);
         valueCell.setPadding(8);
         valueCell.setBorder(Rectangle.BOX);
         valueCell.setBorderWidth(1.0f);
         valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        valueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
         totalTable.addCell(labelCell);
         totalTable.addCell(valueCell);
@@ -262,4 +272,3 @@ public class IncomeService {
         document.close();
     }
 }
-

@@ -13,41 +13,61 @@ import java.util.List;
 public class IncomeRepository {
 
     private static final String FILE_PATH = "data/income.csv";
+    private static final String[] HEADER = {"id", "userId", "amount", "date", "source", "note"};
 
     public IncomeRepository() {
-        createFileIfNotExists();
+        initFile();
     }
 
-    private void createFileIfNotExists() {
+    private void initFile() {
         try {
             File file = new File(FILE_PATH);
             file.getParentFile().mkdirs();
             if (!file.exists()) {
                 file.createNewFile();
-                try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
-                    writer.writeNext(new String[]{"id", "amount", "date", "source", "note"});
-                }
+                writeHeader(file);
+                return;
+            }
+            if (!hasValidHeader(file)) {
+                prependHeader(file);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error creating income file", e);
+            throw new RuntimeException("Error initialising income file", e);
         }
     }
 
-    // Save a new income
+    private void writeHeader(File file) throws IOException {
+        try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
+            writer.writeNext(HEADER);
+        }
+    }
+
+    private boolean hasValidHeader(File file) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String firstLine = br.readLine();
+            return firstLine != null && firstLine.contains("userId") && firstLine.contains("source");
+        }
+    }
+
+    private void prependHeader(File file) throws IOException {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) lines.add(line);
+        }
+        try (PrintWriter pw = new PrintWriter(new FileWriter(file))) {
+            pw.println("\"id\",\"userId\",\"amount\",\"date\",\"source\",\"note\"");
+            for (String line : lines) pw.println(line);
+        }
+    }
+
     public void save(Income income) throws IOException {
         try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH, true))) {
-            writer.writeNext(new String[]{
-                    income.getId(),
-                    String.valueOf(income.getAmount()),
-                    income.getDate().toString(),
-                    income.getSource(),
-                    income.getNote()
-            });
+            writer.writeNext(toRow(income));
         }
     }
 
-    // Load all income
-    public List<Income> loadAll() {
+    public List<Income> loadByUser(String userId) {
         List<Income> incomes = new ArrayList<>();
         File file = new File(FILE_PATH);
         if (!file.exists()) return incomes;
@@ -56,40 +76,66 @@ public class IncomeRepository {
             String[] line;
             boolean isFirstLine = true;
             while ((line = reader.readNext()) != null) {
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue;
-                }
-                if (line.length < 5) continue;
-                Income income = new Income(
-                        line[0],
-                        Double.parseDouble(line[1]),
-                        LocalDate.parse(line[2]),
-                        line[3],
-                        line[4]
-                );
-                incomes.add(income);
+                if (isFirstLine) { isFirstLine = false; continue; }
+                if (line.length < 6) continue;
+                if (!line[1].equals(userId)) continue;
+
+                incomes.add(new Income(
+                        line[0], line[1],
+                        Double.parseDouble(line[2]),
+                        LocalDate.parse(line[3]),
+                        line[4], line[5]
+                ));
             }
         } catch (IOException | CsvValidationException e) {
             throw new RuntimeException("Error reading income file", e);
         }
-
         return incomes;
     }
 
-    // Overwrite all incomes (for update/delete)
-    public void overwriteAll(List<Income> incomes) throws IOException {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH))) {
-            writer.writeNext(new String[]{"id", "amount", "date", "source", "note"});
-            for (Income i : incomes) {
-                writer.writeNext(new String[]{
-                        i.getId(),
-                        String.valueOf(i.getAmount()),
-                        i.getDate().toString(),
-                        i.getSource(),
-                        i.getNote()
-                });
-            }
+    public void overwriteForUser(String userId, List<Income> updatedIncomes) throws IOException {
+        List<Income> all = loadAll();
+        List<Income> others = new ArrayList<>();
+        for (Income i : all) {
+            if (!i.getUserId().equals(userId)) others.add(i);
         }
+        others.addAll(updatedIncomes);
+
+        try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH))) {
+            writer.writeNext(HEADER);
+            for (Income i : others) writer.writeNext(toRow(i));
+        }
+    }
+
+    private List<Income> loadAll() {
+        List<Income> incomes = new ArrayList<>();
+        File file = new File(FILE_PATH);
+        if (!file.exists()) return incomes;
+        try (CSVReader reader = new CSVReader(new FileReader(file))) {
+            String[] line;
+            boolean isFirstLine = true;
+            while ((line = reader.readNext()) != null) {
+                if (isFirstLine) { isFirstLine = false; continue; }
+                if (line.length < 6) continue;
+                incomes.add(new Income(
+                        line[0], line[1],
+                        Double.parseDouble(line[2]),
+                        LocalDate.parse(line[3]),
+                        line[4], line[5]
+                ));
+            }
+        } catch (IOException | CsvValidationException e) {
+            throw new RuntimeException("Error reading income file", e);
+        }
+        return incomes;
+    }
+
+    private String[] toRow(Income i) {
+        return new String[]{
+                i.getId(), i.getUserId(),
+                String.valueOf(i.getAmount()),
+                i.getDate().toString(),
+                i.getSource(), i.getNote()
+        };
     }
 }

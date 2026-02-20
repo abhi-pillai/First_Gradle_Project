@@ -7,26 +7,30 @@ public class User {
     private String id;
     private String username;
     private String passwordHash;
+    private String salt;
 
-    public User(String username, String passwordHash) {
+    // Constructor for new user
+    public User(String username, String passwordHash, String salt) {
         this.id = UUID.randomUUID().toString();
         this.username = username;
         this.passwordHash = passwordHash;
+        this.salt = salt;
     }
 
     // Constructor for loading from CSV
-    public User(String id, String username, String passwordHash) {
+    public User(String id, String username, String passwordHash, String salt) {
         this.id = id;
         this.username = username;
         this.passwordHash = passwordHash;
+        this.salt = salt;
     }
 
-    // Getters
-    public String getId() { return id; }
-    public String getUsername() { return username; }
+    public String getId()           { return id; }
+    public String getUsername()     { return username; }
     public String getPasswordHash() { return passwordHash; }
+    public String getSalt()         { return salt; }
 
-    // Setters
-    public void setUsername(String username) { this.username = username; }
+    public void setUsername(String username)         { this.username = username; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public void setSalt(String salt)                 { this.salt = salt; }
 }

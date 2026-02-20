@@ -6,14 +6,16 @@ import java.util.UUID;
 public class Income {
 
     private String id;
+    private String userId;
     private double amount;
     private LocalDate date;
     private String source;
     private String note;
 
     // Constructor for new income
-    public Income(double amount, LocalDate date, String source, String note) {
+    public Income(String userId, double amount, LocalDate date, String source, String note) {
         this.id = UUID.randomUUID().toString();
+        this.userId = userId;
         this.amount = amount;
         this.date = date;
         this.source = source;
@@ -21,18 +23,19 @@ public class Income {
     }
 
     // Constructor for loading from CSV
-    public Income(String id, double amount, LocalDate date, String source, String note) {
+    public Income(String id, String userId, double amount, LocalDate date, String source, String note) {
         this.id = id;
+        this.userId = userId;
         this.amount = amount;
         this.date = date;
         this.source = source;
         this.note = note;
     }
 
-    // Getters
-    public String getId() { return id; }
-    public double getAmount() { return amount; }
+    public String getId()      { return id; }
+    public String getUserId()  { return userId; }
+    public double getAmount()  { return amount; }
     public LocalDate getDate() { return date; }
-    public String getSource() { return source; }
-    public String getNote() { return note; }
+    public String getSource()  { return source; }
+    public String getNote()    { return note; }
 }

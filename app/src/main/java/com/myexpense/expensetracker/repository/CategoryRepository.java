@@ -12,40 +12,61 @@ import java.util.List;
 public class CategoryRepository {
 
     private static final String FILE_PATH = "data/categories.csv";
+    private static final String[] HEADER = {"id", "userId", "name", "monthlyBudget"};
 
     public CategoryRepository() {
-        createFileIfNotExists();
+        initFile();
     }
 
-    private void createFileIfNotExists() {
+    private void initFile() {
         try {
             File file = new File(FILE_PATH);
             file.getParentFile().mkdirs();
-
             if (!file.exists()) {
                 file.createNewFile();
-                try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
-                    writer.writeNext(new String[]{"id", "name", "monthlyBudget"});
-                }
+                writeHeader(file);
+                return;
+            }
+            if (!hasValidHeader(file)) {
+                prependHeader(file);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error creating category file", e);
+            throw new RuntimeException("Error initialising category file", e);
         }
     }
 
-    // Save new category
+    private void writeHeader(File file) throws IOException {
+        try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
+            writer.writeNext(HEADER);
+        }
+    }
+
+    private boolean hasValidHeader(File file) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String firstLine = br.readLine();
+            return firstLine != null && firstLine.contains("userId") && firstLine.contains("monthlyBudget");
+        }
+    }
+
+    private void prependHeader(File file) throws IOException {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) lines.add(line);
+        }
+        try (PrintWriter pw = new PrintWriter(new FileWriter(file))) {
+            pw.println("\"id\",\"userId\",\"name\",\"monthlyBudget\"");
+            for (String line : lines) pw.println(line);
+        }
+    }
+
     public void save(Category category) throws IOException {
         try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH, true))) {
-            writer.writeNext(new String[]{
-                    category.getId(),
-                    category.getName(),
-                    String.valueOf(category.getMonthlyBudget())
-            });
+            writer.writeNext(toRow(category));
         }
     }
 
-    // Load all categories
-    public List<Category> loadAll() {
+    public List<Category> loadByUser(String userId) {
         List<Category> categories = new ArrayList<>();
         File file = new File(FILE_PATH);
         if (!file.exists()) return categories;
@@ -55,14 +76,13 @@ public class CategoryRepository {
             boolean isFirstLine = true;
             while ((line = reader.readNext()) != null) {
                 if (isFirstLine) { isFirstLine = false; continue; }
-                if (line.length < 3) continue;
+                if (line.length < 4) continue;
+                if (!line[1].equals(userId)) continue;
 
-                Category category = new Category(
-                        line[0],
-                        line[1],
-                        Double.parseDouble(line[2])
-                );
-                categories.add(category);
+                categories.add(new Category(
+                        line[0], line[1], line[2],
+                        Double.parseDouble(line[3])
+                ));
             }
         } catch (IOException | CsvValidationException e) {
             throw new RuntimeException("Error reading category file", e);
@@ -70,17 +90,44 @@ public class CategoryRepository {
         return categories;
     }
 
-    // Overwrite all categories (for update/delete)
-    public void overwriteAll(List<Category> categories) throws IOException {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH))) {
-            writer.writeNext(new String[]{"id", "name", "monthlyBudget"});
-            for (Category c : categories) {
-                writer.writeNext(new String[]{
-                        c.getId(),
-                        c.getName(),
-                        String.valueOf(c.getMonthlyBudget())
-                });
-            }
+    public void overwriteForUser(String userId, List<Category> updatedCategories) throws IOException {
+        List<Category> all = loadAll();
+        List<Category> others = new ArrayList<>();
+        for (Category c : all) {
+            if (!c.getUserId().equals(userId)) others.add(c);
         }
+        others.addAll(updatedCategories);
+
+        try (CSVWriter writer = new CSVWriter(new FileWriter(FILE_PATH))) {
+            writer.writeNext(HEADER);
+            for (Category c : others) writer.writeNext(toRow(c));
+        }
+    }
+
+    private List<Category> loadAll() {
+        List<Category> categories = new ArrayList<>();
+        File file = new File(FILE_PATH);
+        if (!file.exists()) return categories;
+        try (CSVReader reader = new CSVReader(new FileReader(file))) {
+            String[] line;
+            boolean isFirstLine = true;
+            while ((line = reader.readNext()) != null) {
+                if (isFirstLine) { isFirstLine = false; continue; }
+                if (line.length < 4) continue;
+                categories.add(new Category(
+                        line[0], line[1], line[2], Double.parseDouble(line[3])
+                ));
+            }
+        } catch (IOException | CsvValidationException e) {
+            throw new RuntimeException("Error reading category file", e);
+        }
+        return categories;
+    }
+
+    private String[] toRow(Category c) {
+        return new String[]{
+                c.getId(), c.getUserId(), c.getName(),
+                String.valueOf(c.getMonthlyBudget())
+        };
     }
 }

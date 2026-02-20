@@ -123,10 +123,16 @@ public class ExpenseService {
     public void exportToPdf(String userId, String filePath) throws Exception {
         List<Expense> expenses = repository.loadByUser(userId);
 
+        java.io.InputStream fontStream = ExpenseService.class
+                .getResourceAsStream("/fonts/NotoSans_ExtraCondensed-Regular.ttf");
+        byte[] fontBytes = fontStream.readAllBytes();
         BaseFont baseFont = BaseFont.createFont(
-                "src/main/resources/fonts/NotoSans_ExtraCondensed-Regular.ttf",
+                "NotoSans.ttf",
                 BaseFont.IDENTITY_H,
-                BaseFont.EMBEDDED
+                BaseFont.EMBEDDED,
+                true,
+                fontBytes,
+                null
         );
 
         Document document = new Document(PageSize.A4, 40, 40, 60, 60);

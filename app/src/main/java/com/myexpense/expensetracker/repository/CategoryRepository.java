@@ -14,10 +14,17 @@ public class CategoryRepository {
     private static final String FILE_PATH = getDataPath("categories.csv");
 
     private static String getDataPath(String filename) {
-        String appData = System.getenv("APPDATA");
-        String base = (appData != null)
-                ? appData + java.io.File.separator + "TrackIt" + java.io.File.separator + "data"
-                : "data";
+        String os   = System.getProperty("os.name").toLowerCase();
+        String home = System.getProperty("user.home");
+        String base;
+        if (os.contains("win")) {
+            String appData = System.getenv("APPDATA");
+            base = (appData != null ? appData : home) + java.io.File.separator + "TrackIt" + java.io.File.separator + "data";
+        } else if (os.contains("mac")) {
+            base = home + "/Library/Application Support/TrackIt/data";
+        } else {
+            base = home + "/.local/share/TrackIt/data";
+        }
         return base + java.io.File.separator + filename;
     }
     private static final String[] HEADER = {"id", "userId", "name", "monthlyBudget"};

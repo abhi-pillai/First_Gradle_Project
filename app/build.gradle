@@ -83,7 +83,7 @@ tasks.register('jpackage', Exec) {
              : /* linux default */      'deb'
 
     // Use layout.buildDirectory instead of deprecated buildDir (Gradle 9.x fix)
-    def jpackageOutDir = layout.buildDirectory.dir('jpackage').get().asFile
+    def jpackageOutDir = layout.buildDirectory.dir('dist').get().asFile
 
     doFirst {
         // jpackage needs the output dir to NOT already exist

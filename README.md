@@ -122,8 +122,8 @@ Filter expenses and income by date range, category, or keyword. Filters wrap to 
 ### Clone and run
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/trackit.git
-cd trackit
+git clone https://github.com/abhi-pillai/First_Gradle_Project.git
+cd First_Gradle_Project
 ./gradlew run
 ```
 

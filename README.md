@@ -187,7 +187,7 @@ First_Gradle_Project/
 │       │   └── AccountSettingsDialog.java    # Change password + delete account
 │       └── util/
 │           ├── PasswordUtil.java             # Salt generation + SHA-256 hashing
-│           └── AppPaths.java                 # Resolves ~/.trackit/data/ paths
+│         
 └── src/main/resources/
     └── fonts/
         └── NotoEmoji-Regular.ttf             # Bundled emoji font (platform-independent)

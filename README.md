@@ -38,7 +38,7 @@ Head to the [**Releases**](../../releases/latest) page and grab the installer fo
 | 🪟 **Windows** | `.exe` | Run the installer wizard, follow the prompts |
 | 🍎 **macOS** | `.dmg` | Open the disk image, drag TrackIt to Applications |
 | 🐧 **Ubuntu / Debian** | `.deb` | `sudo dpkg -i trackit_*.deb` |
-| 🐧 **Fedora / RedHat** | `.rpm` | `sudo rpm -i trackit_*.rpm` |
+
 
 > **Note:** Windows may show a SmartScreen warning on first run since the binary isn't code-signed yet. Click **"More info" → "Run anyway"** to proceed.
 

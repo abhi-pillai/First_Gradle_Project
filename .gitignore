@@ -1,0 +1,47 @@
+# Ignore Kotlin plugin data
+.kotlin
+
+# =========================
+# Gradle
+# =========================
+.gradle/
+build/
+
+# Ignore Gradle wrapper logs
+gradle-app.setting
+
+# =========================
+# Java
+# =========================
+bin/
+*.class
+*.log
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Runtime Data (IMPORTANT)
+# =========================
+app/data/*
+!app/data/.gitkeep
+
+
+# # Ignore IDE-specific files
+# # IntelliJ IDEA
+# .idea/
+# *.iml
+
+# # Eclipse
+# .project
+# .classpath
+# .settings/
+

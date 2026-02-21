@@ -1,0 +1,111 @@
+# .github/workflows/release.yml
+#
+# Triggered when you push a version tag like:  git tag v1.0.0 && git push --tags
+#
+# Builds three native installers in parallel:
+#   • Windows  → TrackIt-1.0.0.exe
+#   • macOS    → TrackIt-1.0.0.dmg
+#   • Linux    → trackit_1.0.0_amd64.deb
+#
+# All three are attached to the GitHub Release automatically.
+
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'           # triggers on v1.0.0, v1.2.3, etc.
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+            artifact-pattern: 'app/build/dist/*.exe'
+
+          - os: macos-latest
+            label: macOS
+            artifact-pattern: 'app/build/dist/*.dmg'
+
+          - os: ubuntu-latest
+            label: Linux
+            artifact-pattern: 'app/build/dist/*.deb'
+
+    runs-on: ${{ matrix.os }}
+    name: Build – ${{ matrix.label }}
+
+    steps:
+      # 1. Check out your source code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Install JDK 21 (includes jpackage)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # 3. Cache Gradle downloads so subsequent builds are faster
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # 4. Make gradlew executable (Linux/macOS only; Windows uses gradlew.bat)
+      - name: Make gradlew executable
+        if: runner.os != 'Windows'
+        run: chmod +x gradlew
+
+      # 5. Build the fat JAR + native installer
+      - name: Build installer
+        run: ./gradlew :app:jpackage --no-daemon
+        # Windows note: Gradle will use gradlew.bat automatically on Windows runners
+
+      # 6. Upload the installer as a build artifact (visible in Actions tab)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrackIt-${{ matrix.label }}
+          path: ${{ matrix.artifact-pattern }}
+          retention-days: 7
+
+  # ── After all three builds succeed, create a GitHub Release ──────────────
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # needed to create releases
+
+    steps:
+      - name: Download all installers
+        uses: actions/download-artifact@v4
+        with:
+          path: installers/
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: TrackIt ${{ github.ref_name }}
+          body: |
+            ## TrackIt ${{ github.ref_name }}
+
+            Download the installer for your operating system below:
+
+            | Platform | File |
+            |---|---|
+            | 🪟 Windows | `.exe` installer |
+            | 🍎 macOS   | `.dmg` disk image |
+            | 🐧 Linux   | `.deb` package |
+
+            **No Java installation required** — the JVM is bundled.
+          files: installers/*
+          draft: false
+          prerelease: false

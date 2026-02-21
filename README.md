@@ -37,8 +37,7 @@ Head to the [**Releases**](../../releases/latest) page and grab the installer fo
 |----------|-----------|--------------|
 | 🪟 **Windows** | `.exe` | Run the installer wizard, follow the prompts |
 | 🍎 **macOS** | `.dmg` | Open the disk image, drag TrackIt to Applications |
-| 🐧 **Ubuntu / Debian** | `.deb` | `sudo dpkg -i trackit_*.deb` |
-
+| 🐧 **Ubuntu / Debian** | `.deb` | `sudo apt install ./trackit_*.deb` |
 
 > **Note:** Windows may show a SmartScreen warning on first run since the binary isn't code-signed yet. Click **"More info" → "Run anyway"** to proceed.
 
@@ -53,7 +52,7 @@ Head to the [**Releases**](../../releases/latest) page and grab the installer fo
 <td width="50%">
 
 ### 📊 Dashboard
-Live summary cards showing total income, total expenses, and net balance at a glance. Collapsible side navigation with a hamburger toggle. Tables refresh automatically after every add/edit/delete.
+Live summary cards showing total income, total expenses, and net balance at a glance. Tables refresh automatically after every add/edit/delete.
 
 ### 💸 Expense Tracking
 Add, edit, and delete expenses with:
@@ -72,22 +71,20 @@ Create custom categories, set individual monthly budgets per category, edit name
 <td width="50%">
 
 ### 💼 Budget Management
-Set a global monthly spending budget that **persists across restarts** (stored in `budget.properties`). View remaining budget and per-category budget status in the Budget dialog with ✔ / ⚠ indicators.
+Set a global monthly spending budget that **persists across restarts** (stored in `budget.properties`). View remaining budget and per-category budget status with ✔ / ⚠ indicators.
 
-### 📈 Reports & Export
+### 📈 Reports & PDF Export
 - Monthly report with income vs expense summary
 - Pie chart breakdown by category
-- Export to **PDF** — professionally formatted with your logo and totals row
-- Export to **CSV** — for spreadsheet analysis
+- Export to **PDF** — professionally formatted with logo and totals row
 
 ### 🔐 User Accounts
 - Salted SHA-256 password hashing (per-user salt)
-- Live password strength meter during registration
 - Change password from Account Settings
 - Delete account — wipes all associated data permanently
 
 ### 🔍 Filtering & Search
-Filter expenses and income by date range, category, or keyword. Filters wrap to a second line on narrow windows (WrapLayout).
+Filter expenses and income by date range, category, or keyword.
 
 </td>
 </tr>
@@ -99,11 +96,64 @@ Filter expenses and income by date range, category, or keyword. Filters wrap to 
 
 ## 📸 Screenshots
 
-> _Screenshots coming soon — contributions welcome!_
+### 🔐 Login & Registration
 
-| Dashboard | Add Expense | Reports |
-|-----------|-------------|---------|
-| _coming soon_ | _coming soon_ | _coming soon_ |
+| Login Screen | Register Screen |
+|---|---|
+| ![Login Screen](screenshots/login.png) | ![Register Screen](screenshots/register.png) |
+
+*Secure login with salted SHA-256 password hashing. New users get 9 default categories on registration.*
+
+---
+
+### 📊 Dashboard
+
+![Dashboard](screenshots/dashboard.png)
+
+*The main dashboard showing total income, total expenses, net savings, and full expense/income tables with edit and delete actions.*
+
+---
+
+### 💸 Expense & Income Management
+
+| Add Expense | Add Income |
+|---|---|
+| ![Add Expense](screenshots/add_expense.png) | ![Add Income](screenshots/add_income.png) |
+
+*Add expenses with category, payment method, date, and notes. Log income with source and date.*
+
+---
+
+### 📁 Categories & 💼 Budget
+
+| Manage Categories | Budget Overview |
+|---|---|
+| ![Manage Categories](screenshots/categories.png) | ![Budget Overview](screenshots/budget.png) |
+
+*Set monthly budgets per category. Budget overview shows remaining balance and ⚠ alerts when over budget.*
+
+---
+
+### 📈 Reports
+
+| Monthly Report | 
+|---|
+| ![Reports](screenshots/reports.png) |
+
+*Monthly income*
+
+---
+
+### 📄 PDF Generated
+
+![PDF Generated](screenshots/pdf_export.png)
+
+*Professional PDF report with app branding, formatted table, and total row — ready to save or share.*
+
+---
+
+> 📷 **Want to contribute screenshots?**
+> Take screenshots of each screen and open a Pull Request adding them to a `screenshots/` folder in the repo root. See the [Contributing](#-contributing) section below.
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>
 
@@ -117,14 +167,15 @@ Filter expenses and income by date range, category, or keyword. Filters wrap to 
 |------|---------|----------|
 | JDK  | 21+     | [Temurin (recommended)](https://adoptium.net/) |
 | Gradle | 9.3+ | Included via `gradlew` wrapper |
-| WiX Toolset *(Windows only)* | 3.x | [wixtoolset.org](https://wixtoolset.org/) — required for `.exe`/`.msi` packaging |
+| WiX Toolset *(Windows only)* | 3.x | [wixtoolset.org](https://wixtoolset.org/) — required for `.exe` packaging |
 
 ### Clone and run
 
 ```bash
 git clone https://github.com/abhi-pillai/First_Gradle_Project.git
 cd First_Gradle_Project
-./gradlew run
+./gradlew run           # Linux / macOS
+gradlew run             # Windows
 ```
 
 ### Build a fat JAR
@@ -138,12 +189,13 @@ java -jar app/build/libs/TrackIt.jar
 
 ```bash
 # Builds installer for your current OS
-./gradlew jpackage
+./gradlew jpackage      # Linux / macOS
+gradlew jpackage        # Windows
 ```
 
-Output will be in `app/build/installer/`.
+Output will be in `app/build/dist/`.
 
-> **Cross-compiling is not supported** — build on Windows to get `.exe`, on macOS to get `.dmg`, on Linux to get `.deb`/`.rpm`. GitHub Actions handles all platforms automatically on each release tag.
+> **Cross-compiling is not supported** — build on Windows to get `.exe`, on macOS to get `.dmg`, on Linux to get `.deb`. GitHub Actions handles all platforms automatically on each release tag.
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>
 
@@ -153,6 +205,10 @@ Output will be in `app/build/installer/`.
 
 ```
 First_Gradle_Project/
+├── .github/
+│   └── workflows/
+│       └── release.yml                       # CI/CD — builds all 3 installers on tag push
+├── screenshots/                              # App screenshots (for README)
 ├── app/
 │   └── src/main/java/com/myexpense/expensetracker/
 │       ├── Main.java                         # Entry point
@@ -169,10 +225,10 @@ First_Gradle_Project/
 │       │   └── CategoryRepository.java
 │       ├── service/                          # Business logic
 │       │   ├── AuthService.java              # Login, register, change password, delete account
-│       │   ├── ExpenseService.java           # CRUD + filter + PDF/CSV export
-│       │   ├── IncomeService.java            # CRUD + filter + PDF/CSV export
+│       │   ├── ExpenseService.java           # CRUD + filter + PDF export
+│       │   ├── IncomeService.java            # CRUD + filter + PDF export
 │       │   ├── CategoryService.java          # CRUD + default category seeding
-│       │   ├── BudgetService.java            # Monthly + per-category budgets (persisted)
+│       │   ├── BudgetService.java            # Monthly + per-category budgets
 │       │   └── ReportService.java            # Summary + category breakdown
 │       ├── ui/                               # Swing UI layer
 │       │   ├── LoginFrame.java               # Login / register screen
@@ -184,13 +240,12 @@ First_Gradle_Project/
 │       │   ├── BudgetDialog.java
 │       │   ├── ReportsDialog.java
 │       │   ├── ManageCategoriesDialog.java
-│       │   └── AccountSettingsDialog.java    # Change password + delete account
+│       │   └── AccountSettingsDialog.java
 │       └── util/
-│           ├── PasswordUtil.java             # Salt generation + SHA-256 hashing
-│         
+│           └── PasswordUtil.java             # Salt generation + SHA-256 hashing
 └── src/main/resources/
     └── fonts/
-        └── NotoSans_ExtraCondensed-Regular.ttf            # Bundled font for ₹ symbol(platform-independent)
+        └── NotoSans_ExtraCondensed-Regular.ttf   # Bundled font for ₹ symbol
 ```
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>
@@ -199,7 +254,13 @@ First_Gradle_Project/
 
 ## 🗄️ Data Storage
 
-All data is stored **locally** in the `~/.trackit/data/` directory (your home folder). Nothing is sent to the cloud.
+All data is stored **locally on your device**. Nothing is sent to the cloud.
+
+| Platform | Location |
+|----------|----------|
+| 🪟 Windows | `C:\Users\YourName\AppData\Roaming\TrackIt\data\` |
+| 🍎 macOS | `~/Library/Application Support/TrackIt/data/` |
+| 🐧 Linux | `~/.local/share/TrackIt/data/` |
 
 | File | Contents | Format |
 |------|----------|--------|
@@ -215,7 +276,7 @@ Every record includes a `userId` column. All repository queries filter strictly 
 
 ### Backing up your data
 
-Simply copy the `~/.trackit/data/` folder anywhere safe. To restore, paste it back. The files are plain text and can be opened in any spreadsheet application.
+Copy the `TrackIt/data/` folder from your platform's location above to anywhere safe. To restore, paste it back. The files are plain text and can be opened in any spreadsheet application.
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>
 
@@ -226,13 +287,13 @@ Simply copy the `~/.trackit/data/` folder anywhere safe. To restore, paste it ba
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | Language | Java 21 | Core application |
-| UI Framework | Java Swing | Desktop GUI (custom-painted components) |
+| UI Framework | Java Swing | Desktop GUI |
 | Build Tool | Gradle 9.3 | Compilation, packaging, tasks |
 | Native Packaging | jpackage (JDK built-in) | Bundles JVM into installer |
+| Fat JAR | Shadow Plugin 8.3.5 | Bundles all dependencies |
 | CSV Parsing | OpenCSV 5.9 | Reading and writing data files |
 | PDF Export | OpenPDF 1.3 | Generating expense/income reports |
 | Password Security | SHA-256 + random salt | Per-user salted password hashing |
-| Emoji Rendering | Noto Emoji (bundled TTF) | Cross-platform emoji in Swing buttons |
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>
 
@@ -240,13 +301,7 @@ Simply copy the `~/.trackit/data/` folder anywhere safe. To restore, paste it ba
 
 ## 🚀 Releasing a New Version
 
-Update the version in `gradle.properties`:
-
-```properties
-appVersion=1.1.0
-```
-
-Commit, tag, and push:
+Commit your changes, tag, and push:
 
 ```bash
 git add .
@@ -257,9 +312,9 @@ git push origin v1.1.0
 ```
 
 GitHub Actions will automatically:
-1. Build on Windows, macOS, and Linux runners
+1. Build on **Windows**, **macOS**, and **Linux** runners in parallel
 2. Package each platform's native installer via `jpackage`
-3. Publish all installers to the GitHub Releases page
+3. Publish all three installers to the **GitHub Releases** page
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>
 
@@ -270,11 +325,11 @@ GitHub Actions will automatically:
 Contributions, bug reports, and feature requests are welcome!
 
 1. Fork the repository
-2. Create a feature branch — `git checkout -b feature/your-feature`
-3. Commit your changes — `git commit -m "Add your feature"`
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m "Add your feature"`
 4. Push and open a Pull Request
 
-Please make sure your code follows the existing layer structure (model → repository → service → UI).
+Please follow the existing layer structure: **model → repository → service → UI**
 
 <div align="right"><a href="#-trackit">↑ Back to top</a></div>
 
